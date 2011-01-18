@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ]]--
 
-require 'vector'
+require 'hump/vector'
 
 local camera = {}
 camera.__index = camera

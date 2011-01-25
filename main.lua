@@ -21,14 +21,40 @@ house = {
 }
 
 -- data about the stones
-stones = {}
+stones = {
+	radius = 24
+	images = {} -- images loaded from disk
+}
+
+-- player info
+player = {
+	state = "aiming" -- (are we aiming, twirling, sweeping, or colliding)
+}
+
+function newStone() {
+	local stone = {}
+	
+	-- create body and shape
+	stone.body = love.physics.newBody(world, 2 * stones.radius, ARENA_HEIGHT / 2, 15, 10)
+	stone.shape = love.physics.newCircleShape(stone.body, 0, 0, 24)
+	
+	-- set physics options
+	stone.body:setLinearDamping(0.3)
+	stone.body:setAngularDamping(0.3)
+	stone.shape:setRestitution(0.5)
+	stone.shape:setSensor(true)
+	stone.img = stones.images.cry
+	
+	return stone
+}
 
 function love.load()
-	-- randomize the madness
-	--math.randomseed(love.timer.getMicroTime())
-	
+	-- convenience
+	local gfx = love.graphics
+	local phys = love.physics
+
 	-- set background color
-	love.graphics.setBackgroundColor(220, 220, 220)
+	gfx.setBackgroundColor(220, 220, 220)
 	
 	-- camera
 	cam = Camera(vector(SCREEN_WIDTH / 4, ARENA_HEIGHT / 2))
@@ -36,68 +62,48 @@ function love.load()
 	cam.lastCoords = vector(-1, -1)
 	
 	-- create a new physics world
-	world = love.physics.newWorld(0, 0, ARENA_WIDTH, ARENA_HEIGHT)
+	world = phys.newWorld(0, 0, ARENA_WIDTH, ARENA_HEIGHT)
 	world:setGravity(0, 0)
 	world:setMeter(48)
 	
 	-- define our walls
-	walls.left.body = love.physics.newBody(world, 2, ARENA_HEIGHT / 2, 0, 0)
-	walls.left.shape = love.physics.newRectangleShape(walls.left.body, 0, 0, 5, ARENA_HEIGHT, 0)
-	walls.right.body = love.physics.newBody(world, ARENA_WIDTH - 2, ARENA_HEIGHT / 2, 0, 0)
-	walls.right.shape = love.physics.newRectangleShape(walls.right.body, 0, 0, 5, ARENA_HEIGHT, 0)
-	walls.top.body = love.physics.newBody(world, ARENA_WIDTH / 2, 2, 0, 0)
-	walls.top.shape = love.physics.newRectangleShape(walls.top.body, 0, 0, ARENA_WIDTH, 5, 0)
-	walls.bottom.body = love.physics.newBody(world, ARENA_WIDTH / 2, ARENA_HEIGHT - 2, 0, 0)
-	walls.bottom.shape = love.physics.newRectangleShape(walls.bottom.body, 0, 0, ARENA_WIDTH, 5, 0)
+	walls.left.body = phys.newBody(world, 2, ARENA_HEIGHT / 2, 0, 0)
+	walls.left.shape = phys.newRectangleShape(walls.left.body, 0, 0, 5, ARENA_HEIGHT, 0)
+	walls.right.body = phys.newBody(world, ARENA_WIDTH - 2, ARENA_HEIGHT / 2, 0, 0)
+	walls.right.shape = phys.newRectangleShape(walls.right.body, 0, 0, 5, ARENA_HEIGHT, 0)
+	walls.top.body = phys.newBody(world, ARENA_WIDTH / 2, 2, 0, 0)
+	walls.top.shape = phys.newRectangleShape(walls.top.body, 0, 0, ARENA_WIDTH, 5, 0)
+	walls.bottom.body = phys.newBody(world, ARENA_WIDTH / 2, ARENA_HEIGHT - 2, 0, 0)
+	walls.bottom.shape = phys.newRectangleShape(walls.bottom.body, 0, 0, ARENA_WIDTH, 5, 0)
 	
 	-- define the house
-	house.body = love.physics.newBody(world, ARENA_WIDTH - (3 * house.radius), ARENA_HEIGHT / 2, 0, 0)
-	house.shape = love.physics.newCircleShape(house.body, 0, 0, house.radius)
+	house.body = phys.newBody(world, ARENA_WIDTH - (3 * house.radius), ARENA_HEIGHT / 2, 0, 0)
+	house.shape = phys.newCircleShape(house.body, 0, 0, house.radius)
 	
-	-- ball settings
-	--[[
-	ball.body = love.physics.newBody(world, 400, 300, 15, 10)
-	ball.body:setLinearDamping(0.3)
-	ball.body:setAngularDamping(0.3)
-	ball.shape = love.physics.newCircleShape(ball.body, 0, 0, 24)
-	ball.shape:setRestitution(0.5)
-	ball.img = love.graphics.newImage("ball/cry.png")
-	]]--
-	
-	-- pick a random sector for the goal
-	--[[
-	local randX = math.random(4)
-	local randY = math.random(3)
-	goal.sector = randX * randY
-	goal.body = love.physics.newBody(world, 100 + ((randX - 1) * 200), 100 + ((randY - 1) * 200), 0, 0)
-	goal.shape = love.physics.newRectangleShape(goal.body, 0, 0, 150, 150, 0)
-	goal.shape:setSensor(true)
-	]]--
+	-- load images for the stones
+	stones.images.cry = gfx.newImage("stones/cry.png")
 end
 
 function love.update(dt)
-	if love.keyboard.isDown("right") then
-		cam:translate(vector(5, 0))
-	end
-	if love.keyboard.isDown("left") then
-		cam:translate(vector(-5, 0))
-	end
-	if love.keyboard.isDown("up") then
-		cam:translate(vector(0, -5))
-	end
-	if love.keyboard.isDown("down") then
-		cam:translate(vector(0, 5))
+	-- update the physics world
+	world:update(dt)
+	
+	-- updates for the aiming state
+	if player.state == "aiming" then
+		
 	end
 	
-	-- move the camera
-	if cam.moving then
+	-- camera updates
+	if cam.moving and (player.state == "aiming" or player.state == "twirling") then
 		local pos = cam:mousepos()
 		local delta = cam.clickPos - pos
 		cam:translate(delta)
 	end
 
-	-- update the physics world
-	--world:update(dt)
+	
+	
+	
+	
 	
 	-- has the ball come to rest?
 	--[[

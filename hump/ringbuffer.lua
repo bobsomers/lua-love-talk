@@ -24,10 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ]]--
 
+local setmetatable, getmetatable, table = setmetatable, getmetatable, table
+module(...)
 local ringbuffer = {}
 ringbuffer.__index = ringbuffer
 
-function Ringbuffer(...)
+function new(...)
 	local rb = {}
 	rb.items = {...}
 	rb.current = 1
@@ -45,7 +47,7 @@ end
 function ringbuffer:append(item, ...)
 	if not item then return end
 	self.items[#self.items+1] = item
-	self:append(...)
+	return self:append(...)
 end
 
 function ringbuffer:removeAt(k)
@@ -77,10 +79,7 @@ function ringbuffer:size()
 end
 
 function ringbuffer:next()
-	self.current = self.current + 1
-	if self.current > #self.items then
-		self.current = 1
-	end
+	self.current = (self.current % #self.items) + 1
 	return self:get()
 end
 
@@ -89,4 +88,11 @@ function ringbuffer:prev()
 	if self.current < 1 then
 		self.current = #self.items
 	end
+end
+
+-- Ringbuffer() as a shortcut to Ringbuffer.new()
+do
+	local m = {}
+	m.__call = function(_, ...) return new(...) end
+	setmetatable(_M, m)
 end

@@ -24,36 +24,43 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ]]--
 
-Timer = {}
-Timer.functions = {}
-function Timer.update(dt)
-	for func, delay in pairs(Timer.functions) do
+local assert, type = assert, type
+local pairs, ipairs = pairs, ipairs
+local min = math.min
+module(...)
+
+functions = {}
+function update(dt)
+	local to_remove = {}
+	for func, delay in pairs(functions) do
 		delay = delay - dt
 		if delay <= 0 then
-			Timer.functions[func] = nil
-			func(func)
+			to_remove[#to_remove+1] = func
 		else
-			Timer.functions[func] = delay
+			functions[func] = delay
 		end
 	end
-end
-
-function Timer.add(delay, func)
-	assert(type(func) == "function", "second argument needs to be a function")
-	Timer.functions[func] = delay
-end
-
-function Timer.addPeriodic(delay, func, count)
-	assert(type(func) == "function", "second argument needs to be a function")
-	if count then
-		Timer.add(delay, function(f) func(func) count = count - 1 if count > 0 then Timer.add(delay, f) end end)
-	else
-		Timer.add(delay, function(f) func(func) Timer.add(delay, f) end)
+	for _,func in ipairs(to_remove) do
+		functions[func] = nil
+		func(func)
 	end
 end
 
-function Timer.clear()
-	Timer.functions = {}
+function add(delay, func)
+	assert(type(func) == "function", "second argument needs to be a function")
+	functions[func] = delay
+end
+
+function addPeriodic(delay, func, count)
+	assert(type(func) == "function", "second argument needs to be a function")
+	if count then
+		return add(delay, function(f) func(func) count = count - 1 if count > 0 then add(delay, f) end end)
+	end
+	return add(delay, function(f) func(func) add(delay, f) end)
+end
+
+function clear()
+	functions = {}
 end
 
 function Interpolator(length, func)
@@ -61,7 +68,7 @@ function Interpolator(length, func)
 	local t = 0
 	return function(dt, ...)
 		t = t + dt
-		return t <= length or nil, func(math.min(1, (t-dt)/length), ...)
+		return t <= length and func((t-dt)/length, ...) or nil
 	end
 end
 

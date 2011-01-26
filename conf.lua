@@ -10,4 +10,4 @@ function love.conf(t)
 	
 	-- debug settings
 	t.console = true
-end
+end 

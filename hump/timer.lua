@@ -80,4 +80,4 @@ function Oscillator(length, func)
 		while t > length do t = t - length end
 		return func(t/length, ...)
 	end
-end
+end 

@@ -87,4 +87,4 @@ do
 	local m = {}
 	m.__call = function(_, ...) return new(...) end
 	setmetatable(_M, m)
-end
+end 

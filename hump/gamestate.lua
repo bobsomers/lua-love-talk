@@ -151,4 +151,4 @@ function registerEvents()
 	love.joystickreleased = joystickreleased
 	_quit                 = love.quit
 	love.quit             = quit
-end
+end 
